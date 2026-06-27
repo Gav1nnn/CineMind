@@ -23,6 +23,7 @@ func main() {
 	router.GET("/movies", controllers.GetMovies())
 	router.GET("/movie/:imdb_id", controllers.GetMovie())
 	router.POST("/addmovie", controllers.Addmovie())
+	router.POST("/register", controllers.RegisterUser())
 
 	port := os.Getenv("PORT")
 	if port == "" {
