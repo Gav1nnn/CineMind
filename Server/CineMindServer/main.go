@@ -21,6 +21,8 @@ func main() {
 	})
 
 	router.GET("/movies", controllers.GetMovies())
+	router.GET("/movie/:imdb_id", controllers.GetMovie())
+	router.POST("/addmovie", controllers.Addmovie())
 
 	port := os.Getenv("PORT")
 	if port == "" {
