@@ -37,7 +37,7 @@ func GenerateAllTokens(email, firstName, lastName, role, userid string) (string,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(SECRET_KEY))
 
 	if err != nil {
@@ -56,7 +56,7 @@ func GenerateAllTokens(email, firstName, lastName, role, userid string) (string,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 	}
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodES256, refreshClaims)
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	signedRefreshToken, err := refreshToken.SignedString([]byte(SECRET_REFRESH_KEY))
 	if err != nil {
 		return "", "", err

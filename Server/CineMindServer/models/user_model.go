@@ -16,7 +16,7 @@ type User struct {
 	Password        string        `bson:"password" json:"password" validate:"required,min=6"`
 	Role            string        `bson:"role" json:"role" validate:"oneof=ADMIN USER"`
 	CreatedAt       time.Time     `bson:"created_at" json:"created_at"`
-	UpdatedAt       time.Time     `bson:"updated_at" json:"updated_at"`
+	UpdatedAt       time.Time     `bson:"update_at" json:"update_at"`
 	Token           string        `bson:"token" json:"token"`
 	RefreshToken    string        `bson:"refresh_token" json:"refresh_token"`
 	FavouriteGenres []Genre       `bson:"favourite_genres" json:"favourite_genres" validate:"required,dive"`
@@ -33,5 +33,7 @@ type UserResponse struct {
 	LastName        string  `json:"last_name"`
 	Email           string  `json:"email"`
 	Role            string  `json:"role"`
+	Token           string  `json:"token"`
+	RefreshToken    string  `json:"refreshtoken"`
 	FavouriteGenres []Genre `json:"favourite_genres"`
 }
