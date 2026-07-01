@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Gav1nnn/CineMind/Server/CineMindServer/controllers"
+	"github.com/Gav1nnn/CineMind/Server/CineMindServer/routes"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,11 +20,8 @@ func main() {
 		c.String(200, "hello, cinemind")
 	})
 
-	router.GET("/movies", controllers.GetMovies())
-	router.GET("/movie/:imdb_id", controllers.GetMovie())
-	router.POST("/addmovie", controllers.Addmovie())
-	router.POST("/register", controllers.RegisterUser())
-	router.POST("/login", controllers.LoginUser())
+	routes.SetupProtectedRoutes(router)
+	routes.SetupPublicRoutes(router)
 
 	port := os.Getenv("PORT")
 	if port == "" {

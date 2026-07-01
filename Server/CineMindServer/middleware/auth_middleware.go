@@ -1,0 +1,34 @@
+package middleware
+
+import (
+	"net/http"
+
+	"github.com/Gav1nnn/CineMind/Server/CineMindServer/utils"
+	"github.com/gin-gonic/gin"
+)
+
+func AuthMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		token, err := utils.GetAccessToken(ctx)
+		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			ctx.Abort()
+			return
+		}
+		if token == "" {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "No token is provided"})
+			ctx.Abort()
+			return
+		}
+
+		claims, err := utils.ValidateToken(token)
+		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			ctx.Abort()
+		}
+		ctx.Set("userId", claims.UserID)
+		ctx.Set("role", claims.Role)
+
+		ctx.Next()
+	}
+}
