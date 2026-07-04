@@ -185,7 +185,7 @@ func GetReviewRanking(admin_review string) (string, int, error) {
 		return "", 0, err
 	}
 
-	base_prompt_template := os.Getenv("BASE_PROMPR_TEMPLATE")
+	base_prompt_template := os.Getenv("BASE_PROMPT_TEMPLATE")
 	base_prompt := strings.Replace(base_prompt_template, "{rankings}", sentimentDelimited, 1)
 
 	response, err := llm.Call(context.Background(), base_prompt+admin_review)
