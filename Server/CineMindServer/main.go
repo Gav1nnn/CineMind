@@ -20,8 +20,8 @@ func main() {
 		c.String(200, "hello, cinemind")
 	})
 
-	routes.SetupProtectedRoutes(router)
 	routes.SetupPublicRoutes(router)
+	routes.SetupProtectedRoutes(router)
 
 	port := os.Getenv("PORT")
 	if port == "" {
