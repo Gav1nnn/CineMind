@@ -55,7 +55,7 @@ func GenerateAllTokens(email, firstName, lastName, role, userid string) (string,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "CineMind",
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * 7 * time.Hour)),
 		},
 	}
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
@@ -130,4 +130,36 @@ func GetUserIdFromContext(c *gin.Context) (string, error) {
 		return "", errors.New("unable to retrieve userId")
 	}
 	return id, nil
+}
+
+func GetRoleFromContext(c *gin.Context) (string, error) {
+	role, exists := c.Get("role")
+	if !exists {
+		return "", errors.New("role does not exist in the context")
+	}
+	memberRole, ok := role.(string)
+	if !ok {
+		return "", errors.New("unable to retrieve role")
+	}
+	return memberRole, nil
+}
+
+func ValidateRefreshToken(tokenString string) (*SignedDetails, error) {
+	claims := &SignedDetails{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(SECRET_REFRESH_KEY), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, errors.New("invalid signing method")
+	}
+
+	if claims.ExpiresAt.Time.Before(time.Now()) {
+		return nil, errors.New("refresh token has expired")
+	}
+
+	return claims, nil
 }
