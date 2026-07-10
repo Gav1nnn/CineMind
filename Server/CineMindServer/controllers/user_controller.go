@@ -128,3 +128,83 @@ func LoginUser() gin.HandlerFunc {
 		})
 	}
 }
+
+func LogoutHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			UserID string `json:"user_id"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+			return
+		}
+		if req.UserID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is required"})
+			return
+		}
+
+		err := utils.UpdateAllTokens(req.UserID, "", "")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error logging out"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+	}
+}
+
+func RefreshTokenHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(c, 100*time.Second)
+		defer cancel()
+
+		var req struct {
+			RefreshToken string `json:"refresh_token"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+			return
+		}
+		if req.RefreshToken == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "refresh_token is required"})
+			return
+		}
+
+		claims, err := utils.ValidateRefreshToken(req.RefreshToken)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
+			return
+		}
+
+		var foundUser models.User
+		err = userCollection.FindOne(ctx, bson.M{"user_id": claims.UserID}).Decode(&foundUser)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+			return
+		}
+
+		newToken, newRefreshToken, err := utils.GenerateAllTokens(
+			foundUser.Email, foundUser.FirstName, foundUser.LastName, foundUser.Role, foundUser.UserID,
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
+			return
+		}
+
+		err = utils.UpdateAllTokens(foundUser.UserID, newToken, newRefreshToken)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating tokens"})
+			return
+		}
+
+		c.JSON(http.StatusOK, models.UserResponse{
+			UserId:          foundUser.UserID,
+			FirstName:       foundUser.FirstName,
+			LastName:        foundUser.LastName,
+			Email:           foundUser.Email,
+			Role:            foundUser.Role,
+			Token:           newToken,
+			RefreshToken:    newRefreshToken,
+			FavouriteGenres: foundUser.FavouriteGenres,
+		})
+	}
+}

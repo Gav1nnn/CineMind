@@ -23,8 +23,9 @@ import (
 )
 
 var movieCollection *mongo.Collection = database.OpenCollection("movies")
-var rankingCollection *mongo.Collection = database.OpenCollection("rankings ")
+var rankingCollection *mongo.Collection = database.OpenCollection("rankings")
 var validate = validator.New()
+var genreCollection *mongo.Collection = database.OpenCollection("genres")
 
 func GetMovies() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -109,6 +110,16 @@ func Addmovie() gin.HandlerFunc {
 
 func AdminReviewUpdate() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		role, err := utils.GetRoleFromContext(c)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Role not found in context"})
+			return
+		}
+		if role != "ADMIN" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User must be part of the ADMIN role"})
+			return
+		}
+
 		movieId := c.Param("imdb_id")
 		if movieId == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Movie ID required"})
@@ -129,6 +140,7 @@ func AdminReviewUpdate() gin.HandlerFunc {
 		sentiment, rankVal, err := GetReviewRanking(req.AdminReview)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting review ranking"})
+			return
 		}
 		filter := bson.D{{Key: "imdb_id", Value: movieId}}
 		update := bson.M{
@@ -303,4 +315,28 @@ func GetUsersFavouriteGenres(userId string) ([]string, error) {
 		}
 	}
 	return genreNames, nil
+}
+
+func GetGenres() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		cursor, err := genreCollection.Find(ctx, bson.M{})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching genres"})
+			return
+		}
+		defer cursor.Close(ctx)
+
+		var genres []models.Genre
+		if err := cursor.All(ctx, &genres); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		if genres == nil {
+			genres = []models.Genre{}
+		}
+		c.JSON(http.StatusOK, genres)
+	}
 }
