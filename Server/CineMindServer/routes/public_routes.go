@@ -9,4 +9,7 @@ func SetupPublicRoutes(router *gin.Engine) {
 	router.POST("/register", controllers.RegisterUser())
 	router.POST("/login", controllers.LoginUser())
 	router.GET("/movies", controllers.GetMovies())
+	router.POST("/logout", controllers.LogoutHandler())
+	router.POST("/refresh", controllers.RefreshTokenHandler())
+	router.GET("/genres", controllers.GetGenres())
 }
